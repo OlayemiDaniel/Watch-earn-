@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://sad.adsgram.ai/js/sad.min.js"></script>
+<style>
+body{font-family:sans-serif;text-align:center;padding:20px;background:#111;color:#fff}
+button{padding:15px 25px;margin:10px;border-radius:10px;border:none;font-size:16px;width:90%}
+.watch{background:#0098EA;color:#fff}
+.withdraw{background:#222;color:#fff;border:1px solid #444}
+</style>
+</head>
+<body>
+<h2>💰 Watch & Earn</h2>
+<p>Hi <span id="name">user</span></p>
+<h1>$<span id="bal">0.000</span></h1>
+<p>Ads today: <span id="ads">0</span>/25</p>
+
+<button class="watch" onclick="watchAd()">▶️ Watch Ad (+$0.002)</button>
+<button class="withdraw" onclick="withdraw()">Withdraw (Min $1)</button>
+<p id="msg"></p>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCENQb44hOSUfiuewcuh2g5t9QNw1EWdn8",
+  authDomain: "watch-earn-d8f52.firebaseapp.com",
+  projectId: "watch-earn-d8f52",
+  storageBucket: "watch-earn-d8f52.firebasestorage.app",
+  messagingSenderId: "294583106675",
+  appId: "1:294583106675:web:27e5d146f53af057ba7e06",
+  measurementId: "G-7WMK8CTXFR"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const tg = window.Telegram.WebApp;
+tg.ready();
+const userId = tg.initDataUnsafe?.user?.id?.toString() || "test123";
+const username = tg.initDataUnsafe?.user?.username || "test_user";
+document.getElementById('name').innerText = "@" + username;
+
+let userData = { balance: 0, adsToday: 0, lastDate: new Date().toDateString() };
+const userRef = doc(db, "users", userId);
+
+async function loadUser(){
+  const snap = await getDoc(userRef);
+  if(snap.exists()){
+    userData = snap.data();
+    if(userData.lastDate !== new Date().toDateString()){
+      userData.adsToday = 0;
+      userData.lastDate = new Date().toDateString();
+    }
+  } else {
+    await setDoc(userRef, userData);
+  }
+  updateUI();
+}
+loadUser();
+
+function updateUI(){
+  document.getElementById('bal').innerText = userData.balance.toFixed(3);
+  document.getElementById('ads').innerText = userData.adsToday;
+}
+
+// ADSGRAM
+const AdController = window.Adsgram.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
+
+// MONETAG - this will load
+let monetagReady = false;
+</script>
+
+<!-- Monetag Tag - REPLACE 1234567 WITH YOUR REAL ZONE ID -->
+<script src="https://alwingulla.com/88/tag.min.js" data-zone="YOUR_MONETAG_ZONE_ID" async data-cfasync="false"></script>
+
+<script type="module">
+import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+
+// Make functions global
+window.watchAd = async function(){
+  const balEl = document.getElementById('bal');
+  const adsEl = document.getElementById('ads');
+  const msgEl = document.getElementById('msg');
+  
+  // Access userData from previous script scope via window
+  // We need to re-import logic quick fix: use localStorage as bridge
+  // Simplified version - will work because we keep same db ref
+
+  if(window.userDataGlobal && window.userDataGlobal.adsToday >= 25){
+    msgEl.innerText = "Daily limit reached, come tomorrow";
+    return;
+  }
+
+  try{
+    // 1. Show Adsgram first (pays you $3.8 CPM)
+    const result = await window.Adsgram.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" }).show();
+    
+    // 2. Show Monetag second (extra $2-3 CPM)
+    // Monetag interstitial trigger
+    if(typeof window.show_1234567 === 'function'){
+        await window.show_1234567();
+    }
+
+    if(result.done){
+      // This will be handled by the main module, but we update here too
+      msgEl.innerText = "✅ +$0.002 added (double income for you)";
+      // Trigger balance update - reload page to update Firestore
+      location.reload();
+    }
+  }catch(e){
+    console.log(e);
+    document.getElementById('msg').innerText = "No ads now, try again in 10s";
+  }
+}
+</script>
+
+<script type="module">
+import { getFirestore, doc, getDoc, setDoc, updateDoc, collection, addDoc } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
+
+const firebaseConfig2 = {
+  apiKey: "AIzaSyCENQb44hOSUfiuewcuh2g5t9QNw1EWdn8",
+  authDomain: "watch-earn-d8f52.firebaseapp.com",
+  projectId: "watch-earn-d8f52",
+  storageBucket: "watch-earn-d8f52.firebasestorage.app",
+  messagingSenderId: "294583106675",
+  appId: "1:294583106675:web:27e5d146f53af057ba7e06"
+};
+const app2 = initializeApp(firebaseConfig2, "second");
+const db2 = getFirestore(app2);
+const tg2 = window.Telegram.WebApp;
+const userId2 = tg2.initDataUnsafe?.user?.id?.toString() || "test123";
+const username2 = tg2.initDataUnsafe?.user?.username || "test_user";
+let userData2 = { balance: 0, adsToday: 0, lastDate: new Date().toDateString() };
+const userRef2 = doc(db2, "users", userId2);
+
+async function load2(){
+  const snap = await getDoc(userRef2);
+  if(snap.exists()){
+    userData2 = snap.data();
+    if(userData2.lastDate !== new Date().toDateString()){
+      userData2.adsToday = 0;
+      userData2.lastDate = new Date().toDateString();
+      await updateDoc(userRef2, userData2);
+    }
+  }
+  window.userDataGlobal = userData2;
+  document.getElementById('bal').innerText = userData2.balance.toFixed(3);
+  document.getElementById('ads').innerText = userData2.adsToday;
+}
+load2();
+
+const AdCtrl = window.Adsgram.init({ blockId: "YOUR_ADSGRAM_BLOCK_ID" });
+
+window.watchAd = async function(){
+  const msgEl = document.getElementById('msg');
+  if(userData2.adsToday >= 25){
+    msgEl.innerText = "Daily limit reached";
+    return;
+  }
+  try{
+    const res = await AdCtrl.show();
+    // Try Monetag after
+    try{
+      if(window.show_9764122) { window.show_9764122(); } // Monetag function
+    }catch(e){}
+
+    if(res.done){
+      userData2.balance += 0.002;
+      userData2.adsToday += 1;
+      await updateDoc(userRef2, userData2);
+      window.userDataGlobal = userData2;
+      document.getElementById('bal').innerText = userData2.balance.toFixed(3);
+      document.getElementById('ads').innerText = userData2.adsToday;
+      msgEl.innerText = "✅ +$0.002 added";
+    }
+  }catch(e){
+    msgEl.innerText = "No ad available, try again";
+  }
+}
+
+window.withdraw = async function(){
+  const msgEl = document.getElementById('msg');
+  if(userData2.balance < 1){
+    msgEl.innerText = "Min $1 to withdraw";
+    return;
+  }
+  await addDoc(collection(db2, "withdrawals"), {
+    userId: userId2,
+    username: username2,
+    amount: userData2.balance,
+    date: new Date(),
+    status: "pending"
+  });
+  msgEl.innerText = "Withdraw request sent! Paid in 24h";
+  userData2.balance = 0;
+  await updateDoc(userRef2, userData2);
+  document.getElementById('bal').innerText = "0.000";
+}
+</script>
+</body>
+</html>
